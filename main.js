@@ -2,10 +2,10 @@ function commentContent(comments) {
   if (comments) {
     var commentArr = new Array();
     for (j=0; j < comments.length; j++) {
-      commentArr.push(`<div class="col-md-12">${comments[j]}</div>`);
+      commentArr.push(`<li class="list-group-item">${comments[j]}</li>`);
     }
     console.log(commentArr.join(''))
-    return $('<div class="col-md-12"></div>').append(commentArr.join('')).html();
+    return $('<div class="col-md-12"><ul class="list-group list-group-flush"></ul></div>').append(commentArr.join('')).html();
   } else {
     return '<div class="col-md-12"> no commments to display </div>';
   }
@@ -23,7 +23,8 @@ function postContent(postArr) {
                     </h2>\
                   </div>\
                   <div id="collapse${i}" class="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">\
-                    <div class="card-body">` +
+                    <div class="card-body">\
+                      <h5> Description </h5>` +
                       postArr[i].desc
                     + `</div>\
                     <div class="card-body">\
@@ -43,7 +44,9 @@ function postContent(postArr) {
 
 $(document).ready(function() {
   var allPosts = JSON.parse(localStorage.getItem('Post'));
-  $('.all-posts').append(postContent(allPosts));
+  if (localStorage.getItem('Post')) {
+    $('.all-posts').append(postContent(allPosts));
+  }
 
 
   $('.post-link').on('click', function() {
@@ -52,8 +55,11 @@ $(document).ready(function() {
   });
 
   $('.home-button').on('click', function () {
-    $('.all-posts').show();
-    $('.post-form').hide();
+    if (localStorage.getItem('Post')) {
+      $('.all-posts').html(postContent(allPosts));
+      $('.all-posts').show();
+      $('.post-form').hide();
+    }
   })
 
   $('.form-submit').on('click', function () {
@@ -87,8 +93,28 @@ $(document).ready(function() {
     }
     allPosts[index] = postObj
     localStorage.setItem('Post', JSON.stringify(allPosts));
-    location.reload();
-    $("#collapse0").addClass("show")
+    sessionStorage.reloadAfterPageLoad = true;
+    sessionStorage.setItem('indexToOpen', index);
+    window.location.reload();
+  });
 
-  })
+  $(function () {
+    if ( sessionStorage.reloadAfterPageLoad ) {
+      var index = sessionStorage.getItem('indexToOpen');
+      $('#collapse'+index).addClass('show');
+      sessionStorage.removeItem('indexToOpen');
+      sessionStorage.reloadAfterPageLoad = false;
+    }
+  });
+
+  $('.search').on('click', function(event){
+    event.preventDefault();
+    var allPosts = JSON.parse(localStorage.getItem('Post'));
+    var searchTerm = $('.search-term').val();
+    var filteredPosts = allPosts.filter(function(post) {
+      return post.title.match(searchTerm);
+    });
+    $('.all-posts').html(postContent(filteredPosts));
+    $('.search-term').val('');
+  });
 });
